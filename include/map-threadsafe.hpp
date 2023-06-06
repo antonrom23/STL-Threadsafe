@@ -24,7 +24,7 @@ namespace std
             public:
                 map(){}
                 map(const std::map<K,V> &m) : internal_map(m){}
-                map(const std::threadsafe::map &m) = delete;
+                map(const std::threadsafe::map<K,V> &m) = delete;
 
                 bool get(const K& key,V& output)
                 {
@@ -38,6 +38,50 @@ namespace std
                         output = it->second;
                     	return true;
 		    }
+                }
+
+
+                bool getTail(V& output)
+                {
+                    std::shared_lock<std::shared_mutex> lock(mutex);
+                    if(!internal_map.empty()){
+                        output = internal_map.rbegin()->second;
+                        return true;
+                    }
+                    return false;
+                }
+
+                bool getHead(V& output)
+                {
+                    std::shared_lock<std::shared_mutex> lock(mutex);
+                    if(!internal_map.empty()){
+                        output = internal_map.begin()->second;
+                        return true;
+                    }
+                    return false;
+                }
+
+                bool getAndEraseHead(V& output)
+                {
+                    std::shared_lock<std::shared_mutex> lock(mutex);
+                    if(!internal_map.empty()){
+                        auto iter = internal_map.begin();
+                        output = iter->second;
+                        internal_map.erase(iter);
+                        return true;
+                    }
+                    return false;
+                }
+
+                bool eraseHead()
+                {
+                    std::shared_lock<std::shared_mutex> lock(mutex);
+                    if(!internal_map.empty()){
+                        auto iter = internal_map.begin();
+                        internal_map.erase(iter);
+                        return true;
+                    }
+                    return false;
                 }
             
                 bool insert(const K & key,V & value){
@@ -53,6 +97,11 @@ namespace std
                 size_t size(){
                     std::shared_lock<std::shared_mutex> lock(mutex);
                     return internal_map.size();
+                }
+
+                bool empty(){
+                    std::shared_lock<std::shared_mutex> lock(mutex);
+                    return internal_map.empty();
                 }
                 
                 bool contains(const K& key){
@@ -94,7 +143,7 @@ namespace std
 			std::unique_lock<std::shared_mutex> lock(mutex);
 			auto it = internal_map.find(key);
 			if (it == internal_map.end() || it->second != value)
-				return false
+				return false;
 			else
 			{
 				internal_map.erase(it);
@@ -112,6 +161,19 @@ namespace std
 			}
 			return false;
 		}
+
+                bool insertOrReplace(const K& key,const V& value){
+                    std::unique_lock<std::shared_mutex> lock(mutex);
+
+                    auto it = internal_map.find(key);
+                    if (it != internal_map.end()){
+                        it->second = value;
+                        return false;
+                    }
+                    else{
+                        return internal_map.insert(std::make_pair(key,value)).second;
+                    }
+                }
 
 		bool replace(const K& key,V& oldValue,V& newValue){
 			std::unique_lock<std::shared_mutex> lock(mutex);
