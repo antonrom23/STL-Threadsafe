@@ -99,6 +99,10 @@ namespace std
                     return internal_map.size();
                 }
 
+                size_t sizeNoThreadSafe(){
+                    return internal_map.size();
+                }
+
                 bool empty(){
                     std::shared_lock<std::shared_mutex> lock(mutex);
                     return internal_map.empty();
