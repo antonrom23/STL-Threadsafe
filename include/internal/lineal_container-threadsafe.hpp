@@ -31,7 +31,7 @@ namespace std
         template<class T>
         class lineal_container
         {
-            uint64_t tam_max = std::numeric_limits<uint64_t>::max();
+            uint64_t tam_max = (std::numeric_limits<uint64_t>::max)();
             std::condition_variable Consumer_Variable;
             std::condition_variable Producer_Variable;
 
