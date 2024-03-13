@@ -179,6 +179,20 @@ namespace std
                     }
                 }
 
+            bool insertOrReplace(const K& key,const V& newValue, V& oldValue){
+                std::unique_lock<std::shared_mutex> lock(mutex);
+
+                auto it = internal_map.find(key);
+                if (it != internal_map.end()){
+                    oldValue = it->second;
+                    it->second = newValue;
+                    return false;
+                }
+                else{
+                    return internal_map.insert(std::make_pair(key,newValue)).second;
+                }
+            }
+
 		bool replace(const K& key,V& oldValue,V& newValue){
 			std::unique_lock<std::shared_mutex> lock(mutex);
 			
